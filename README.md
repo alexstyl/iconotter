@@ -6,7 +6,7 @@ Create every icon your app needs from one piece of artwork, straight from the te
 
 Icon Otter turns an SVG, PNG, or JPEG into ready-to-use app icons for Android, iOS, macOS, Windows, Linux and the web, from adaptive launcher icons to `.icns`, `.ico` and favicons. Everything runs locally, without an account, server, or AI service.
 
-[Installation](#installation) · [Quick start](#quick-start) · [Icons for every platform](#icons-for-every-platform) · [Examples](#examples) · [Options](#options) · [Integration](#integration)
+[Installation](#installation) · [Quick start](#quick-start) · [Generate launcher icons](#generate-launcher-icons) · [Generate notification icons](#generate-notification-icons) · [Options](#options) · [Integration](#integration)
 
 ## Installation
 
@@ -65,9 +65,9 @@ Generation never overwrites an existing output directory or edits your app. All 
 - **Local SVG rendering:** embedded resvg handles paths, shapes, gradients, and internal references without an external renderer.
 - **Interactive or scripted:** prompts when artwork is omitted in a terminal; explicit flags for scripts and agents.
 
-## Icons for every platform
+## Generate launcher icons
 
-The otter from the header, split into two layers: [the artwork](assets/examples/otter.png) and [a single-color silhouette](assets/examples/otter-monochrome.png) for Android themed icons, on [the header's pattern](assets/examples/pattern.png).
+Turn your artwork into app icons for every platform. The otter from the header is [the artwork](assets/examples/otter.png), with [a single-color silhouette](assets/examples/otter-monochrome.png) for Android themed icons, on [the header's pattern](assets/examples/pattern.png):
 
 ```sh
 iconotter launcher \
@@ -80,13 +80,60 @@ iconotter launcher \
 | Platform | Output | What you get |
 | --- | --- | --- |
 | Android | ![Otter Android launcher icon in circle, squircle and square masks, with themed versions below](assets/examples/android.png) | Adaptive icon with a themed variant, legacy and round icons, and a Play Store image |
-| iOS | ![Otter iOS app icon on yellow](assets/examples/ios.png) | 1024×1024 icon in an Xcode asset catalog |
+| iOS | ![Otter iOS app icon on the yellow pattern](assets/examples/ios.png) | 1024×1024 icon in an Xcode asset catalog |
 | macOS | ![Otter macOS app icon on a yellow glass tile](assets/examples/macos.png) | Glass app icon as `.icns`, `.iconset`, asset catalog and editable `.icon` |
 | Windows | ![Otter Windows icon at 96, 48, 32 and 16 pixels](assets/examples/windows.png) | `AppIcon.ico` with 16–256px images |
 | Linux | ![Otter Linux icons at 128, 48, 32 and 16 pixels](assets/examples/linux.png) | 512px icon and the `hicolor` theme from 16 to 512px |
 | Web | ![Otter Apple touch icon and 32 and 16 pixel favicons](assets/examples/web.png) | `favicon.ico`, 16px and 32px favicons, and a 180px Apple touch icon |
 
-## Examples
+The examples below change one option at a time and show the Android, iOS and macOS output.
+
+### Use a solid color background
+
+```sh
+iconotter launcher \
+  --foreground assets/examples/otter.png \
+  --monochrome assets/examples/otter-monochrome.png \
+  --background '#FDDD0E' \
+  --platform android,ios,macos
+```
+
+![Otter on solid yellow as Android, iOS and macOS icons](assets/examples/launcher-solid.png)
+
+On macOS, Icon Composer renders the glass gradient from your color.
+
+### Use a gradient or image background
+
+```sh
+iconotter launcher \
+  --foreground assets/examples/otter.png \
+  --monochrome assets/examples/otter-monochrome.png \
+  --background assets/examples/gradient.svg \
+  --platform android,ios,macos
+```
+
+![Otter on a blue gradient as Android, iOS and macOS icons](assets/examples/launcher-gradient.png)
+
+`--background` takes a `#RRGGBB` color or an opaque SVG, PNG, or JPEG, such as [this gradient](assets/examples/gradient.svg) or the pattern above. The image is scaled to cover the icon and cropped to its center, never stretched. On Android, the image covers the visible part of the adaptive icon, and the margin launchers reveal when they move the icon mirrors its edges. On macOS glass, the image sits under the artwork as its own layer in the `.icon` document, and Icon Composer renders its glass gradient over it.
+
+### Make the artwork bigger or crop it
+
+```sh
+iconotter launcher \
+  --foreground assets/examples/otter.png \
+  --monochrome assets/examples/otter-monochrome.png \
+  --background assets/examples/pattern.png \
+  --padding=-12 \
+  --platform android,ios,macos
+```
+
+![Otter enlarged past the icon edges as Android, iOS and macOS icons](assets/examples/launcher-padding.png)
+
+Padding is a percentage per side of the visible icon canvas. Positive values inset the artwork; zero fits it to the visible bounds; negative values enlarge and crop it, as above. Aspect ratio is preserved, so rectangular artwork can still leave space along its shorter side.
+
+On Android, padding is measured against the visible inner 72dp of the 108dp adaptive layer. On iOS, it uses the full 1024px canvas. On macOS, it applies inside the visible 824px tile, independently of the fixed transparent outer margins. Android legacy, store, and preview images use the same visible composition. `--padding` and `--size` cannot be combined.
+
+Without `--padding`, Android uses a 56dp bounding diagonal inside the 66dp safe area; iOS fits the longest painted side within 75% of its canvas; macOS uses 75% of its tile. These foreground sizes are composition defaults, not Apple requirements.
 
 ### Choose a platform
 
@@ -102,7 +149,7 @@ iconotter launcher --foreground logo.svg --platform web --output web-icons
 
 ### Multicolor artwork
 
-Android themed icons need a single-color mark. For multicolor artwork, supply a transparent silhouette separately:
+Android themed icons need a single-color mark. The otter has many colors, so the examples above pass [its line art](assets/examples/otter-monochrome.png) with `--monochrome`; you can see it in the themed row of the Android output. Supply any transparent, single-color silhouette the same way:
 
 ```sh
 iconotter launcher \
@@ -114,42 +161,17 @@ iconotter launcher \
 
 Single-color foreground artwork can supply its own monochrome silhouette.
 
-### Use an image as the background
+## Generate notification icons
+
+Turn a glyph into Android notification icons:
 
 ```sh
-iconotter launcher --foreground logo.png --background pattern.png --platform ios,macos,web
+iconotter notification --foreground assets/examples/glyphs/bell.svg --name ic_stat_bell
 ```
 
-`--background` takes a `#RRGGBB` color or an opaque SVG, PNG, or JPEG. The image is scaled to cover the icon and cropped to its center, never stretched. On Android, the image covers the visible part of the adaptive icon, and the margin launchers reveal when they move the icon mirrors its edges. On macOS glass, the image sits under the artwork as its own layer in the `.icon` document.
+![Bell, message, download and terminal notification icons, each previewed on a dark and a light status bar](assets/examples/notifications.png)
 
-### Remove padding or crop the artwork
-
-```sh
-# Fit the longest painted side to the visible icon bounds
-iconotter launcher --foreground logo.svg --padding 0 --output unpadded-icons
-
-# Enlarge a character beyond the edges for intentional clipping
-iconotter launcher \
-  --foreground character.png \
-  --monochrome character-silhouette.svg \
-  --background '#85C9B4' \
-  --padding=-15 \
-  --output cropped-icons
-```
-
-Padding is a percentage per side of the visible icon canvas. Positive values inset the artwork; zero removes the added inset; negative values enlarge and crop it. Aspect ratio is preserved, so rectangular artwork can still leave space along its shorter side.
-
-On Android, padding is measured against the visible inner 72dp of the 108dp adaptive layer. On iOS, it uses the full 1024px canvas. On macOS, it applies inside the visible 824px tile, independently of the fixed transparent outer margins. Android legacy, store, and preview images use the same visible composition. `--padding` and `--size` cannot be combined.
-
-Without `--padding`, Android uses a 56dp bounding diagonal inside the 66dp safe area; iOS fits the longest painted side within 75% of its canvas; macOS uses 75% of its tile. These foreground sizes are composition defaults, not Apple requirements.
-
-### Android notification icons
-
-```sh
-iconotter notification --foreground bell.svg
-```
-
-This creates `notification-icons/android/` with density-specific white icons on a transparent 24dp canvas. Supply a transparent single-color mark or a dedicated silhouette with `--monochrome FILE`. Multicolor and fully opaque artwork are rejected unless a suitable silhouette is supplied.
+These are the previews for [the bell, message, download and terminal glyphs](assets/examples/glyphs). Each run creates `notification-icons/android/` with density-specific white icons on a transparent 24dp canvas, ready for `.setSmallIcon(R.drawable.ic_stat_bell)`. Supply a transparent single-color mark or a dedicated silhouette with `--monochrome FILE`. Multicolor and fully opaque artwork are rejected unless a suitable silhouette is supplied.
 
 There is no separate iOS notification export: iOS uses the app icon for notifications.
 
