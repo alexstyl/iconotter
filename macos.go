@@ -8,7 +8,6 @@ import (
 	"errors"
 	"fmt"
 	"image"
-	"image/color"
 	"image/draw"
 	"image/png"
 	"math"
@@ -56,7 +55,7 @@ func writeMacOS(ctx context.Context, opts options) error {
 			return err
 		}
 	}
-	background, err := parseColor(opts.Background)
+	background, err := loadBackground(ctx, opts.Background)
 	if err != nil {
 		return err
 	}
@@ -180,9 +179,10 @@ https://developer.apple.com/library/archive/documentation/GraphicsAnimation/Conc
 	return writeBundleFile(ctx, opts.Output, "README.md", []byte(guide))
 }
 
-func composeMacIcon(artwork *image.NRGBA, background color.NRGBA, padding *float64) *image.NRGBA {
+func composeMacIcon(artwork *image.NRGBA, background iconBackground, padding *float64) *image.NRGBA {
 	icon := image.NewNRGBA(image.Rect(0, 0, macCanvas, macCanvas))
-	draw.Draw(icon, icon.Bounds(), image.NewUniform(background), image.Point{}, draw.Src)
+	inset := (macCanvas - macTile) / 2
+	background.fill(icon, image.Rect(inset, inset, inset+macTile, inset+macTile))
 	bounds := paintedBounds(artwork)
 	fraction := .75
 	if padding != nil {

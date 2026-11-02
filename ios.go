@@ -23,7 +23,7 @@ func writeIOS(ctx context.Context, opts options) error {
 	if !assetName.MatchString(opts.Name) {
 		return errors.New("Choose an iOS asset name starting with a letter, using only letters, digits, underscores, and hyphens.")
 	}
-	background, err := parseColor(opts.Background)
+	background, err := loadBackground(ctx, opts.Background)
 	if err != nil {
 		return err
 	}
@@ -32,8 +32,7 @@ func writeIOS(ctx context.Context, opts options) error {
 		return err
 	}
 	const size = 1024
-	icon := image.NewNRGBA(image.Rect(0, 0, size, size))
-	draw.Draw(icon, icon.Bounds(), image.NewUniform(background), image.Point{}, draw.Src)
+	icon := background.canvas(size)
 	bounds := paintedBounds(artwork)
 	// This is a composition default, not Android's adaptive-icon safe zone.
 	// Leave the outside quarter for whitespace while preserving the mark's ratio.

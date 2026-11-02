@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Backgrounds: use an image as the icon background with `--background pattern.png`, on every platform including macOS glass.
+
 ## 0.1.0 - 2026-11-02
 
 - App icons: create Android, iOS, macOS, Windows, Linux and web icons from one SVG, PNG or JPEG.

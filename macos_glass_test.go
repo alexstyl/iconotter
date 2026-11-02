@@ -20,7 +20,7 @@ func TestGlassDocumentKeepsForegroundFlatAndPreservesPadding(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	doc, err := writeMacGlassDocument(context.Background(), opts, artwork, color.NRGBA{245, 245, 247, 255})
+	doc, err := writeMacGlassDocument(context.Background(), opts, artwork, iconBackground{color: color.NRGBA{245, 245, 247, 255}})
 	if err != nil {
 		t.Fatal(err)
 	}

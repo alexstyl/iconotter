@@ -61,19 +61,19 @@ Generation never overwrites an existing output directory or edits your app. All 
 - **Windows and Linux app icons:** a multi-size `.ico`, and PNGs in the freedesktop `hicolor` theme layout.
 - **Web favicons:** `favicon.ico`, 16px and 32px PNG favicons, and an Apple touch icon.
 - **Android notification icons:** white artwork on a transparent status-bar canvas.
-- **Flexible composition:** trim transparent source padding, preserve aspect ratio, choose a solid background, and adjust content padding—including intentional cropping.
+- **Flexible composition:** trim transparent source padding, preserve aspect ratio, choose a solid color or image background, and adjust content padding—including intentional cropping.
 - **Local SVG rendering:** embedded resvg handles paths, shapes, gradients, and internal references without an external renderer.
 - **Interactive or scripted:** prompts when artwork is omitted in a terminal; explicit flags for scripts and agents.
 
 ## Example output
 
-The otter from the header, split into two layers: [the artwork](assets/examples/otter.png) and [a single-color silhouette](assets/examples/otter-monochrome.png) for Android themed icons, on the header's yellow.
+The otter from the header, split into two layers: [the artwork](assets/examples/otter.png) and [a single-color silhouette](assets/examples/otter-monochrome.png) for Android themed icons, on [the header's pattern](assets/examples/pattern.png).
 
 ```sh
 iconotter launcher \
   --foreground assets/examples/otter.png \
   --monochrome assets/examples/otter-monochrome.png \
-  --background '#FDDD0E' \
+  --background assets/examples/pattern.png \
   --platform android,ios,macos,windows,linux,web
 ```
 
@@ -113,6 +113,14 @@ iconotter launcher \
 ```
 
 Single-color foreground artwork can supply its own monochrome silhouette.
+
+### Use an image as the background
+
+```sh
+iconotter launcher --foreground logo.png --background pattern.png --platform ios,macos,web
+```
+
+`--background` takes a `#RRGGBB` color or an opaque SVG, PNG, or JPEG. The image is scaled to cover the icon and cropped to its center, never stretched. Android launchers show about the middle two thirds of the background layer and reveal more of it as the icon moves. On macOS glass, the image sits under the artwork as its own layer in the `.icon` document.
 
 ### Remove padding or crop the artwork
 
@@ -154,7 +162,7 @@ There is no separate iOS notification export: iOS uses the app icon for notifica
 | `--output DIR`, `-o DIR` | Both commands | A new directory; defaults to `app-icons` or `notification-icons`. |
 | `--name NAME` | Both commands | Android launcher: `ic_launcher`; iOS/macOS/Windows: `AppIcon`; Linux: `app-icon`; notification: `ic_stat_notification`. |
 | `--monochrome FILE` | Android | Transparent single-color silhouette for themed or notification icons. |
-| `--background '#RRGGBB'` | Launcher | Opaque solid color; defaults to white. Windows and Linux icons keep source transparency unless it is supplied. |
+| `--background '#RRGGBB'` or `FILE` | Launcher | Opaque solid color or SVG, PNG, or JPEG image; defaults to white. Images cover the icon and are cropped to the center. Windows and Linux icons keep source transparency unless it is supplied. |
 | `--macos-style STYLE` | macOS launcher | `glass` (default): Apple-rendered background with a flat foreground. Requires Icon Composer on macOS. `flat`: local rendering without Apple tools. |
 | `--padding NUMBER` | Launcher | Percent per side, from -100 up to (but not including) 50. Omitted: platform-specific sizing defaults. |
 | `--size NUMBER` | Android | Launcher bounding diagonal: 48–66dp, default 56. Notification longest side: 1–24dp, default 22. |
@@ -187,7 +195,7 @@ Compile with Android API 33 or newer. Review old PNG, WebP, XML, and qualified r
 | Android version | Generated resource |
 | --- | --- |
 | API 25 and below | Legacy launcher and round PNGs, when `--min-sdk` is below 26. |
-| API 26–32 | Color adaptive XML in `mipmap-anydpi-v26`, with transparent foreground and opaque background layers. |
+| API 26–32 | Adaptive XML in `mipmap-anydpi-v26`, with a transparent foreground layer and an opaque background layer: a color drawable, or a PNG per density for an image background. |
 | API 33+ | Adaptive XML in `mipmap-anydpi-v33`, also including a tintable monochrome layer. |
 
 Adaptive layers are 108dp; the outer 18dp allows masking and motion. Default sizing keeps artwork within the 66dp safe area. Explicit padding can extend beyond it, so inspect important details under launcher masks. Themed appearance requires a supporting launcher and enabled themed icons.
@@ -266,7 +274,7 @@ Copy `favicon.ico`, `favicon-16x16.png`, `favicon-32x32.png` and `apple-touch-ic
 
 ## Limitations and troubleshooting
 
-- **Backgrounds are solid colors.** `--background` accepts opaque `#RRGGBB` values. Gradients inside SVG foreground artwork are supported; gradient backgrounds are not.
+- **Backgrounds are opaque.** `--background` accepts a `#RRGGBB` color or an image without transparency. For a gradient background, supply it as an image.
 - **SVG inputs are rasterized.** All platforms receive raster artwork, not Android vector drawables. SVGs require a `viewBox`; convert text to paths. Linked files, embedded images, scripts, and stylesheets are rejected.
 - **Existing image backgrounds remain.** Transparent padding is trimmed, but white or colored backgrounds in PNG/JPEG inputs are not automatically removed. Use transparent artwork for an isolated foreground.
 - **Output directory already exists?** Choose a new `--output` directory. Existing exports are never overwritten.
@@ -274,7 +282,7 @@ Copy `favicon.ico`, `favicon-16x16.png`, `favicon-32x32.png` and `apple-touch-ic
 - **Apple appearance variants:** macOS glass exports include an editable `.icon` document. Exported ICNS and PNG files capture the Default appearance only. iOS exports remain flat asset catalogs. Custom dark, tinted and clear exports are not generated.
 - **Input limits:** files must be at most 10 MiB; decoded bitmap images must contain at most 16 million pixels. Preserve attribution required by the artwork's license.
 
-Running a command without artwork in an interactive terminal opens a prompt. Launcher generation also asks for the background color when omitted. For scripts, pass flags explicitly: piped invocations fail immediately when artwork is missing. `NO_COLOR` and `ACCESSIBLE=1` support plain accessible prompts. Results go to stdout; errors go to stderr with a nonzero exit status.
+Running a command without artwork in an interactive terminal opens a prompt. Launcher generation also asks for the background color or image when omitted. For scripts, pass flags explicitly: piped invocations fail immediately when artwork is missing. `NO_COLOR` and `ACCESSIBLE=1` support plain accessible prompts. Results go to stdout; errors go to stderr with a nonzero exit status.
 
 ## Development and contributing
 

@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"image"
-	"image/color"
 	"image/draw"
 	"math"
 	"path/filepath"
@@ -13,7 +12,7 @@ import (
 	xdraw "golang.org/x/image/draw"
 )
 
-func desktopArtwork(ctx context.Context, opts options) (*image.NRGBA, *color.NRGBA, error) {
+func desktopArtwork(ctx context.Context, opts options) (*image.NRGBA, *iconBackground, error) {
 	if err := validatePadding(opts.Padding); err != nil {
 		return nil, nil, err
 	}
@@ -27,14 +26,14 @@ func desktopArtwork(ctx context.Context, opts options) (*image.NRGBA, *color.NRG
 	if !opts.BackgroundSet {
 		return artwork, nil, nil
 	}
-	background, err := parseColor(opts.Background)
+	background, err := loadBackground(ctx, opts.Background)
 	return artwork, &background, err
 }
 
-func composeDesktopIcon(artwork *image.NRGBA, background *color.NRGBA, size int, padding *float64) *image.NRGBA {
+func composeDesktopIcon(artwork *image.NRGBA, background *iconBackground, size int, padding *float64) *image.NRGBA {
 	icon := image.NewNRGBA(image.Rect(0, 0, size, size))
 	if background != nil {
-		draw.Draw(icon, icon.Bounds(), image.NewUniform(*background), image.Point{}, draw.Src)
+		background.fill(icon, icon.Bounds())
 	}
 	bounds := paintedBounds(artwork)
 	fit := .9

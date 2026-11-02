@@ -37,28 +37,42 @@ func parseColor(value string) (color.NRGBA, error) {
 }
 
 func loadArtwork(ctx context.Context, path string) (*image.NRGBA, error) {
+	img, err := decodeImage(ctx, path, "artwork", "--foreground FILE", renderSize)
+	if err != nil {
+		return nil, err
+	}
+	if paintedBounds(img).Empty() {
+		return nil, errors.New("The artwork is fully transparent. Choose artwork with a visible mark.")
+	}
+	return img, nil
+}
+
+// decodeImage reads an SVG, PNG or JPEG file, rendering SVG so its longest
+// side is svgSize pixels. noun and flag name the file in errors, such as
+// "artwork" and "--foreground FILE".
+func decodeImage(ctx context.Context, path, noun, flag string, svgSize float64) (*image.NRGBA, error) {
 	f, err := os.Open(path)
 	if err != nil {
-		return nil, fmt.Errorf("Could not open artwork %q: %w", path, err)
+		return nil, fmt.Errorf("Could not open %s %q: %w", noun, path, err)
 	}
 	defer f.Close()
 	data, err := io.ReadAll(io.LimitReader(f, maxInputBytes+1))
 	if err != nil {
-		return nil, fmt.Errorf("Could not read artwork %q: %w", path, err)
+		return nil, fmt.Errorf("Could not read %s %q: %w", noun, path, err)
 	}
 	if len(data) > maxInputBytes {
-		return nil, errors.New("The artwork is too large. Choose a file smaller than 10 MB.")
+		return nil, fmt.Errorf("The %s is too large. Choose a file smaller than 10 MB.", noun)
 	}
 	var source image.Image
 	switch strings.ToLower(filepath.Ext(path)) {
 	case ".svg":
-		normalized, width, height, err := normalizeSVG(data)
+		normalized, width, height, err := normalizeSVG(data, svgSize)
 		if err != nil {
-			return nil, fmt.Errorf("Could not use artwork %q: %w", path, err)
+			return nil, fmt.Errorf("Could not use %s %q: %w", noun, path, err)
 		}
 		source, err = renderSVG(ctx, normalized, width, height)
 		if err != nil {
-			return nil, errors.New("Could not render the SVG. Check the artwork or export it as PNG.")
+			return nil, fmt.Errorf("Could not render the SVG. Check the %s or export it as PNG.", noun)
 		}
 	case ".png", ".jpg", ".jpeg":
 		config, _, err := image.DecodeConfig(bytes.NewReader(data))
@@ -66,25 +80,22 @@ func loadArtwork(ctx context.Context, path string) (*image.NRGBA, error) {
 			return nil, errors.New("Could not read the image. Choose a valid PNG or JPEG file.")
 		}
 		if config.Width < 1 || config.Height < 1 || int64(config.Width)*int64(config.Height) > maxImagePixels {
-			return nil, errors.New("The artwork is too large. Choose an image with at most 16 million pixels.")
+			return nil, fmt.Errorf("The %s is too large. Choose an image with at most 16 million pixels.", noun)
 		}
 		source, _, err = image.Decode(bytes.NewReader(data))
 		if err != nil {
 			return nil, errors.New("Could not read the image. Choose a valid PNG or JPEG file.")
 		}
 	default:
-		return nil, errors.New("Choose SVG, PNG, or JPEG artwork with --foreground FILE.")
+		return nil, fmt.Errorf("Choose SVG, PNG, or JPEG %s with %s.", noun, flag)
 	}
 	img := image.NewNRGBA(image.Rect(0, 0, source.Bounds().Dx(), source.Bounds().Dy()))
 	draw.Draw(img, img.Bounds(), source, source.Bounds().Min, draw.Src)
-	if paintedBounds(img).Empty() {
-		return nil, errors.New("The artwork is fully transparent. Choose artwork with a visible mark.")
-	}
 	return img, nil
 }
 
 // Render SVG in a bounded viewport, with no fonts, scripts or linked files.
-func normalizeSVG(data []byte) ([]byte, int, int, error) {
+func normalizeSVG(data []byte, longest float64) ([]byte, int, int, error) {
 	decoder := xml.NewDecoder(bytes.NewReader(data))
 	var output bytes.Buffer
 	encoder := xml.NewEncoder(&output)
@@ -155,7 +166,7 @@ func normalizeSVG(data []byte) ([]byte, int, int, error) {
 				if coords[2] <= 0 || coords[3] <= 0 {
 					return nil, 0, 0, errors.New("The SVG viewBox must have a positive width and height.")
 				}
-				scale := renderSize / math.Max(coords[2], coords[3])
+				scale := longest / math.Max(coords[2], coords[3])
 				width, height = max(1, int(math.Round(coords[2]*scale))), max(1, int(math.Round(coords[3]*scale)))
 				attrs := make([]xml.Attr, 0, len(node.Attr))
 				for _, attr := range node.Attr {

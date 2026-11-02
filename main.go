@@ -68,8 +68,8 @@ func newIconCommand(kind string) *cobra.Command {
 	defaults := []string{"android", "ios"}
 	output, size := "app-icons", 56.0
 	short := "Create Android, iOS, macOS, Windows, Linux and web icons"
-	long := "Create Android launcher icons, an iOS asset catalog, macOS ICNS and iconsets, Windows ICO, Linux PNG icons, or web favicons.\nWindows and Linux icons keep source transparency unless --background is supplied. macOS glass backgrounds use Apple’s Icon Composer.\nTransparent padding is trimmed and the mark is centered. Use --monochrome for multicolor Android artwork."
-	example := "  iconotter launcher --foreground logo.png --background '#FFFFFF' --platform android,ios\n  iconotter launcher --foreground logo.svg --platform macos --name Studio --output mac-icons\n  iconotter launcher --foreground logo.svg --platform windows,linux --name my-app --output desktop-icons\n  iconotter launcher --foreground logo.svg --platform web --output web-icons"
+	long := "Create Android launcher icons, an iOS asset catalog, macOS ICNS and iconsets, Windows ICO, Linux PNG icons, or web favicons.\nWindows and Linux icons keep source transparency unless --background is supplied.\n--background takes a #RRGGBB color or an opaque image, which is scaled to cover the icon and cropped to its center. macOS glass backgrounds use Apple’s Icon Composer.\nTransparent padding is trimmed and the mark is centered. Use --monochrome for multicolor Android artwork."
+	example := "  iconotter launcher --foreground logo.png --background '#FFFFFF' --platform android,ios\n  iconotter launcher --foreground logo.svg --platform macos --name Studio --output mac-icons\n  iconotter launcher --foreground logo.svg --platform windows,linux --name my-app --output desktop-icons\n  iconotter launcher --foreground logo.svg --platform web --output web-icons\n  iconotter launcher --foreground mascot.png --background pattern.png --platform ios,macos"
 	if kind == "notification" {
 		defaults, output, size = []string{"android"}, "notification-icons", 22
 		short = "Create Android notification small icons"
@@ -165,7 +165,7 @@ func newIconCommand(kind string) *cobra.Command {
 	cmd.Flags().Float64Var(&opts.MarkSize, "size", size, sizeHelp)
 	if kind == "launcher" {
 		cmd.Flags().StringVar(&opts.MacOSStyle, "macos-style", "glass", "macOS style: glass (Apple-rendered background, flat foreground) or flat")
-		cmd.Flags().StringVar(&opts.Background, "background", "#FFFFFF", "Opaque background color (#RRGGBB)")
+		cmd.Flags().StringVar(&opts.Background, "background", "#FFFFFF", "Opaque background color (#RRGGBB) or image file (SVG, PNG, or JPEG)")
 		cmd.Flags().Float64Var(&padding, "padding", 0, "Content inset per side as a percent of the visible icon; negative values crop artwork")
 	}
 	return cmd
@@ -180,7 +180,7 @@ func promptArtwork(cmd *cobra.Command, opts *options) error {
 	})}
 	needsBackground := slices.Contains(opts.Platforms, "android") || slices.Contains(opts.Platforms, "ios") || slices.Contains(opts.Platforms, "macos") || slices.Contains(opts.Platforms, "web")
 	if opts.Type != "notification" && !cmd.Flags().Changed("background") && needsBackground {
-		fields = append(fields, huh.NewInput().Title("Background color").Value(&opts.Background).Validate(func(value string) error { _, err := parseColor(value); return err }))
+		fields = append(fields, huh.NewInput().Title("Background color or image").Value(&opts.Background).Validate(validateBackground))
 		opts.BackgroundSet = true
 	}
 	form := huh.NewForm(huh.NewGroup(fields...)).WithInput(cmd.InOrStdin()).WithOutput(cmd.OutOrStdout())
@@ -195,6 +195,19 @@ func promptArtwork(cmd *cobra.Command, opts *options) error {
 			return errors.New("Canceled.")
 		}
 		return err
+	}
+	return nil
+}
+
+// validateBackground checks a prompted background without decoding images:
+// generation reports problems with the image itself.
+func validateBackground(value string) error {
+	if strings.HasPrefix(value, "#") {
+		_, err := parseColor(value)
+		return err
+	}
+	if _, err := os.Stat(value); err != nil {
+		return errors.New("Enter a color in #RRGGBB format, or the path to a background image.")
 	}
 	return nil
 }

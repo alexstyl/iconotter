@@ -109,7 +109,7 @@ func TestMacOSContentPaddingNeverRemovesCanvasMargin(t *testing.T) {
 		t.Fatal(err)
 	}
 	for _, padding := range []float64{0, 20, -25} {
-		icon := composeMacIcon(art, color.NRGBA{255, 255, 255, 255}, &padding)
+		icon := composeMacIcon(art, iconBackground{color: color.NRGBA{255, 255, 255, 255}}, &padding)
 		if bounds := paintedBounds(icon); bounds.Min.X != 100 || bounds.Max.X != 924 {
 			t.Fatalf("padding %g changed outer margin: %v", padding, bounds)
 		}

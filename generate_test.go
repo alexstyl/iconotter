@@ -237,7 +237,7 @@ func TestSVGRejectsLinkedAssetsAndText(t *testing.T) {
 		`<svg viewBox="0 0 NaN 24"/>`,
 		`<svg viewBox="0 0 24 24"/><svg/>`,
 	} {
-		if _, _, _, err := normalizeSVG([]byte(svg)); err == nil {
+		if _, _, _, err := normalizeSVG([]byte(svg), renderSize); err == nil {
 			t.Fatalf("unsupported SVG accepted: %s", svg)
 		}
 	}
@@ -303,12 +303,19 @@ func TestAndroidResourceCompilation(t *testing.T) {
 	if _, err := os.Stat(platform); err != nil {
 		t.Fatal("install Android SDK platform 33 for this check")
 	}
-	for _, minimum := range []int{21, 26, 11} {
+	for _, test := range []struct {
+		minimum         int
+		imageBackground bool
+	}{{21, false}, {26, false}, {11, false}, {21, true}} {
+		minimum := test.minimum
 		opts := defaults(t)
 		opts.MinSDK = minimum
 		if minimum == 11 {
 			opts.Type = "notification"
 			opts.MarkSize = 22
+		}
+		if test.imageBackground {
+			opts.Background = backgroundFixture(t, 300, 200)
 		}
 		path, err := generateAndroid(context.Background(), opts)
 		if err != nil {

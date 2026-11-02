@@ -5,7 +5,6 @@ import (
 	"context"
 	"encoding/binary"
 	"image"
-	"image/color"
 	"image/draw"
 	"image/png"
 	"math"
@@ -18,7 +17,7 @@ func writeWeb(ctx context.Context, opts options) error {
 	if err := validatePadding(opts.Padding); err != nil {
 		return err
 	}
-	background, err := parseColor(opts.Background)
+	background, err := loadBackground(ctx, opts.Background)
 	if err != nil {
 		return err
 	}
@@ -49,9 +48,8 @@ func writeWeb(ctx context.Context, opts options) error {
 	return writePNGFile(ctx, opts.Output, "preview.png", composeWebIcon(artwork, background, 256, opts.Padding))
 }
 
-func composeWebIcon(artwork *image.NRGBA, background color.NRGBA, size int, padding *float64) *image.NRGBA {
-	icon := image.NewNRGBA(image.Rect(0, 0, size, size))
-	draw.Draw(icon, icon.Bounds(), image.NewUniform(background), image.Point{}, draw.Src)
+func composeWebIcon(artwork *image.NRGBA, background iconBackground, size int, padding *float64) *image.NRGBA {
+	icon := background.canvas(size)
 	bounds := paintedBounds(artwork)
 	fit := .9
 	if padding != nil {
