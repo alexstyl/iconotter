@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.2.0 - 2026-11-02
+
 - Backgrounds: use an image as the icon background with `--background pattern.png`, on every platform including macOS glass.
 
 ## 0.1.0 - 2026-11-02
