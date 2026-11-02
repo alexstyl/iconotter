@@ -136,8 +136,8 @@ func TestImageBackgroundOnEveryPlatform(t *testing.T) {
 		t.Fatalf("adaptive icon does not use the background layer: %s %v", adaptive, err)
 	}
 	guide, _ := os.ReadFile(filepath.Join(root, "android", "README.md"))
-	if !strings.Contains(string(guide), "middle two thirds") {
-		t.Fatal("Android guide does not explain how launchers crop the background image")
+	if !strings.Contains(string(guide), "covers the visible 72dp") {
+		t.Fatal("Android guide does not explain where the background image appears")
 	}
 	for _, check := range []struct {
 		path string
@@ -214,4 +214,32 @@ func TestAppleGlassRendersImageBackground(t *testing.T) {
 	if got.B < got.R+80 {
 		t.Fatalf("glass tile does not show the background image: %v", got)
 	}
+}
+
+func TestAndroidBackgroundImageCoversVisibleAreaAndMirrorsMargin(t *testing.T) {
+	// A white image with a red frame shows whether the image maps to the
+	// visible 72dp of the layer rather than to the whole 108dp.
+	img := image.NewNRGBA(image.Rect(0, 0, 100, 100))
+	for y := 0; y < 100; y++ {
+		for x := 0; x < 100; x++ {
+			c := color.NRGBA{R: 255, G: 255, B: 255, A: 255}
+			if x < 10 || x >= 90 || y < 10 || y >= 90 {
+				c = sideColor
+			}
+			img.SetNRGBA(x, y, c)
+		}
+	}
+	bg, err := loadBackground(context.Background(), writePNGFixture(t, img))
+	if err != nil {
+		t.Fatal(err)
+	}
+	layer := bg.adaptiveLayer(432)
+	inset := 432 / 6
+	for _, p := range [][2]int{{inset + 2, 216}, {432 - inset - 3, 216}, {216, inset + 2}, {216, 432 - inset - 3}} {
+		assertColor(t, layer, p[0], p[1], sideColor)
+	}
+	assertColor(t, layer, 216, 216, color.NRGBA{R: 255, G: 255, B: 255, A: 255})
+	// The hidden margin mirrors the frame instead of leaving it empty.
+	assertColor(t, layer, inset-3, 216, sideColor)
+	assertColor(t, layer, 0, 0, color.NRGBA{R: 255, G: 255, B: 255, A: 255})
 }

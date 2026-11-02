@@ -66,3 +66,30 @@ func (b iconBackground) canvas(size int) *image.NRGBA {
 	b.fill(img, img.Bounds())
 	return img
 }
+
+// adaptiveLayer returns a size×size Android adaptive background layer. Launchers
+// show the inner 72dp of the 108dp layer, so an image covers that visible area,
+// matching other platforms, and the margin revealed by launcher motion mirrors
+// the image's edges.
+func (b iconBackground) adaptiveLayer(size int) *image.NRGBA {
+	if b.image == nil {
+		return b.canvas(size)
+	}
+	inset := size / 6
+	visible := b.canvas(size - 2*inset)
+	n := visible.Bounds().Dx()
+	mirror := func(v int) int {
+		v = ((v % (2 * n)) + 2*n) % (2 * n)
+		if v >= n {
+			return 2*n - 1 - v
+		}
+		return v
+	}
+	layer := image.NewNRGBA(image.Rect(0, 0, size, size))
+	for y := 0; y < size; y++ {
+		for x := 0; x < size; x++ {
+			layer.SetNRGBA(x, y, visible.NRGBAAt(mirror(x-inset), mirror(y-inset)))
+		}
+	}
+	return layer
+}

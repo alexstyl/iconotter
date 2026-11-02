@@ -120,7 +120,7 @@ Single-color foreground artwork can supply its own monochrome silhouette.
 iconotter launcher --foreground logo.png --background pattern.png --platform ios,macos,web
 ```
 
-`--background` takes a `#RRGGBB` color or an opaque SVG, PNG, or JPEG. The image is scaled to cover the icon and cropped to its center, never stretched. Android launchers show about the middle two thirds of the background layer and reveal more of it as the icon moves. On macOS glass, the image sits under the artwork as its own layer in the `.icon` document.
+`--background` takes a `#RRGGBB` color or an opaque SVG, PNG, or JPEG. The image is scaled to cover the icon and cropped to its center, never stretched. On Android, the image covers the visible part of the adaptive icon, and the margin launchers reveal when they move the icon mirrors its edges. On macOS glass, the image sits under the artwork as its own layer in the `.icon` document.
 
 ### Remove padding or crop the artwork
 

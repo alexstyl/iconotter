@@ -148,7 +148,7 @@ func writeBundle(ctx context.Context, root string, opts options, foreground, mon
 	}
 	write := func(path string, data []byte) error { return writeBundleFile(ctx, root, path, data) }
 	writePNG := func(path string, img image.Image) error { return writePNGFile(ctx, root, path, img) }
-	// A color background is a shape drawable; an image becomes a full 108dp layer per density.
+	// A color background is a shape drawable; an image becomes a 108dp layer per density.
 	if background.image == nil {
 		bgXML := fmt.Sprintf("<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<shape xmlns:android=\"http://schemas.android.com/apk/res/android\" android:shape=\"rectangle\">\n    <solid android:color=\"#%02X%02X%02X\" />\n</shape>\n", background.color.R, background.color.G, background.color.B)
 		if err := write("res/drawable/"+opts.Name+"_background.xml", []byte(bgXML)); err != nil {
@@ -157,7 +157,7 @@ func writeBundle(ctx context.Context, root string, opts options, foreground, mon
 	}
 	for _, d := range densities {
 		if background.image != nil {
-			if err := writePNG("res/drawable-"+d.name+"/"+opts.Name+"_background.png", background.canvas(d.layer)); err != nil {
+			if err := writePNG("res/drawable-"+d.name+"/"+opts.Name+"_background.png", background.adaptiveLayer(d.layer)); err != nil {
 				return err
 			}
 		}
@@ -228,7 +228,7 @@ func writeBundle(ctx context.Context, root string, opts options, foreground, mon
 	}
 	backgroundNote := "The opaque background fills the canvas."
 	if background.image != nil {
-		backgroundNote = "The background image covers the whole 108dp layer. Launchers show about its middle two thirds and reveal more of it as the icon moves."
+		backgroundNote = "The background image covers the visible 72dp, so it appears at the same scale as on other platforms. The outer 18dp, revealed as launchers move the icon, mirrors the image's edges."
 	}
 	guide := fmt.Sprintf("# Android app icons\n\nCopy `res/` into your app's resource source set, preserving the folders. Merge the two application attributes from `manifest-snippet.xml` into your existing AndroidManifest.xml; do not replace your manifest. Review existing icons with the same names, including XML, WebP and PNG variants, before copying. Remove obsolete resources with those names to avoid duplicate or overriding icons.\n\nCompile with Android API 33 or newer. This bundle targets minSdk %d.\n\n- API 26+: 108dp adaptive layers, with %s. %s\n- API 33+: a separate tintable monochrome layer. The launcher must support themed icons and the user must enable them.\n- API 25 and below: density-specific legacy and round PNGs are included when minSdk is below 26.\n\n`preview.png` shows circle, rounded-square and square masks, followed by example themed icons. These are approximations; launcher masks and effects vary. `play-store.png` is an opaque 512×512 PNG without baked-in corner rounding or shadows.\n\nTransparent source padding is trimmed before fitting the mark. Supply clean artwork without baked-in launcher masks or shadows. Thin or unusually shaped marks may need a size adjustment; verify visual balance on your target launcher.\n\nOfficial requirements:\n- https://developer.android.com/develop/ui/compose/system/icon_design_adaptive\n- https://developer.android.com/studio/write/create-app-icons\n- https://developer.android.com/distribute/google-play/resources/icon-design-specifications\n", opts.MinSDK, composition, backgroundNote)
 	return write("README.md", []byte(guide))
@@ -239,7 +239,7 @@ func writeBundle(ctx context.Context, root string, opts options, foreground, mon
 func composite(mark *image.NRGBA, bg iconBackground, size int, markDP float64, shape string) *image.NRGBA {
 	fullSize := size * 2
 	foreground := layer(mark, fullSize, markDP)
-	full := bg.canvas(fullSize)
+	full := bg.adaptiveLayer(fullSize)
 	draw.Draw(full, full.Bounds(), foreground, image.Point{}, draw.Over)
 	inset := fullSize / 6
 	crop := image.Rect(inset, inset, fullSize-inset, fullSize-inset)
