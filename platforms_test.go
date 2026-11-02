@@ -123,7 +123,7 @@ func TestIOSAssetCatalogAndOpaqueJPEG(t *testing.T) {
 	if _, err := os.Stat(filepath.Join(opts.Output, "android")); !os.IsNotExist(err) {
 		t.Fatal("iOS-only export contains Android files")
 	}
-	if strings.Contains(out.String(), "compileSdk") {
+	if strings.Contains(out.String(), "AndroidManifest.xml") {
 		t.Fatal("Android instructions leaked into iOS-only export")
 	}
 }

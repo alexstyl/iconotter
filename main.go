@@ -135,7 +135,7 @@ func newIconCommand(kind string) *cobra.Command {
 				case kind == "notification":
 					_, err = fmt.Fprintf(cmd.OutOrStdout(), "Copy android/res into your app's source set. Set the notification's small icon with:\n  .setSmallIcon(R.drawable.%s)\n", name)
 				default:
-					_, err = fmt.Fprintf(cmd.OutOrStdout(), "Copy android/res into your app's source set. Set these attributes on <application> in AndroidManifest.xml:\n  android:icon=\"@mipmap/%s\"\n  android:roundIcon=\"@mipmap/%s_round\"\nUse compileSdk 33 or newer for themed icons.\n", name, name)
+					_, err = fmt.Fprintf(cmd.OutOrStdout(), "Copy android/res into your app's source set. Set these attributes on <application> in AndroidManifest.xml:\n  android:icon=\"@mipmap/%s\"\n  android:roundIcon=\"@mipmap/%s_round\"\n", name, name)
 				}
 				if err != nil {
 					return err
