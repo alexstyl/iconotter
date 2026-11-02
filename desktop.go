@@ -26,7 +26,7 @@ func desktopArtwork(ctx context.Context, opts options) (*image.NRGBA, *iconBackg
 	if !opts.BackgroundSet {
 		return artwork, nil, nil
 	}
-	background, err := loadBackground(ctx, opts.Background)
+	background, err := opts.background(ctx)
 	return artwork, &background, err
 }
 

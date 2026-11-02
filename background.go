@@ -3,16 +3,22 @@ package main
 import (
 	"context"
 	"errors"
+	"fmt"
 	"image"
 	"image/color"
 	"image/draw"
+	"regexp"
 	"strings"
 
 	xdraw "golang.org/x/image/draw"
 )
 
-// Render SVG backgrounds large enough for the biggest canvas they fill.
-const backgroundRenderSize = 2048
+// Keep backgrounds at the biggest canvas they fill, the 1024px iOS and macOS
+// icons: SVGs render at this size, and larger images are scaled down once
+// instead of for every icon.
+const backgroundRenderSize = 1024
+
+var hexColor = regexp.MustCompile(`^[0-9A-Fa-f]{6}$`)
 
 // iconBackground is the opaque layer behind the artwork: a solid color, or an
 // image that covers the canvas.
@@ -27,6 +33,9 @@ func loadBackground(ctx context.Context, value string) (iconBackground, error) {
 		c, err := parseColor(value)
 		return iconBackground{color: c}, err
 	}
+	if hexColor.MatchString(value) {
+		return iconBackground{}, fmt.Errorf("Write colors with a leading #, such as --background '#%s'.", value)
+	}
 	img, err := decodeImage(ctx, value, "background image", "--background FILE", backgroundRenderSize)
 	if err != nil {
 		return iconBackground{}, err
@@ -35,6 +44,11 @@ func loadBackground(ctx context.Context, value string) (iconBackground, error) {
 		if img.Pix[i] != 255 {
 			return iconBackground{}, errors.New("The background image has transparent areas. Choose an opaque image, or a color in #RRGGBB format.")
 		}
+	}
+	if shorter := min(img.Bounds().Dx(), img.Bounds().Dy()); shorter > backgroundRenderSize {
+		scaled := image.NewNRGBA(image.Rect(0, 0, img.Bounds().Dx()*backgroundRenderSize/shorter, img.Bounds().Dy()*backgroundRenderSize/shorter))
+		xdraw.CatmullRom.Scale(scaled, scaled.Bounds(), img, img.Bounds(), draw.Src, nil)
+		img = scaled
 	}
 	return iconBackground{image: img}, nil
 }

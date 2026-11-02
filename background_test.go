@@ -256,3 +256,21 @@ func TestAndroidBackgroundImageCoversVisibleAreaAndMirrorsMargin(t *testing.T) {
 	assertColor(t, layer, inset-3, 216, sideColor)
 	assertColor(t, layer, 0, 0, color.NRGBA{R: 255, G: 255, B: 255, A: 255})
 }
+
+func TestLargeBackgroundIsScaledDownOnceWhenLoaded(t *testing.T) {
+	bg, err := loadBackground(context.Background(), backgroundFixture(t, 3000, 1500))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if bg.image.Bounds().Dx() != 2*backgroundRenderSize || bg.image.Bounds().Dy() != backgroundRenderSize {
+		t.Fatalf("background kept at %v", bg.image.Bounds())
+	}
+	assertColor(t, bg.canvas(64), 0, 0, centerColor)
+}
+
+func TestBackgroundColorWithoutHashSuggestsTheFix(t *testing.T) {
+	_, err := loadBackground(context.Background(), "FDDD0E")
+	if err == nil || !strings.Contains(err.Error(), "'#FDDD0E'") {
+		t.Fatalf("got %v", err)
+	}
+}

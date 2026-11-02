@@ -66,6 +66,13 @@ func generate(ctx context.Context, opts options) (string, error) {
 	if err := newDestination(output); err != nil {
 		return "", err
 	}
+	if opts.Type == "launcher" {
+		background, err := loadBackground(ctx, opts.Background)
+		if err != nil {
+			return "", err
+		}
+		opts.loadedBackground = &background
+	}
 	return publishBundle(ctx, output, func(root string) error {
 		for _, platform := range platforms {
 			target := opts

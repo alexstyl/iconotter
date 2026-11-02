@@ -55,7 +55,7 @@ func writeMacOS(ctx context.Context, opts options) error {
 			return err
 		}
 	}
-	background, err := loadBackground(ctx, opts.Background)
+	background, err := opts.background(ctx)
 	if err != nil {
 		return err
 	}

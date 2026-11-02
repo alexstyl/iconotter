@@ -17,7 +17,7 @@ func writeWeb(ctx context.Context, opts options) error {
 	if err := validatePadding(opts.Padding); err != nil {
 		return err
 	}
-	background, err := loadBackground(ctx, opts.Background)
+	background, err := opts.background(ctx)
 	if err != nil {
 		return err
 	}

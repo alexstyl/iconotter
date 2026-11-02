@@ -23,7 +23,7 @@ func writeIOS(ctx context.Context, opts options) error {
 	if !assetName.MatchString(opts.Name) {
 		return errors.New("Choose an iOS asset name starting with a letter, using only letters, digits, underscores, and hyphens.")
 	}
-	background, err := loadBackground(ctx, opts.Background)
+	background, err := opts.background(ctx)
 	if err != nil {
 		return err
 	}

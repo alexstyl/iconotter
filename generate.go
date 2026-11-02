@@ -27,6 +27,17 @@ type options struct {
 	MinSDK                                           int
 	MarkSize                                         float64
 	Padding                                          *float64
+	// loadedBackground is --background decoded once for all platforms in a run.
+	loadedBackground *iconBackground
+}
+
+// background returns --background, decoded once per run when generate has
+// loaded it, so a large image is not decoded again for every platform.
+func (opts options) background(ctx context.Context) (iconBackground, error) {
+	if opts.loadedBackground != nil {
+		return *opts.loadedBackground, nil
+	}
+	return loadBackground(ctx, opts.Background)
 }
 
 type density struct {
@@ -66,7 +77,7 @@ func generateAndroid(ctx context.Context, opts options) (string, error) {
 	if math.IsNaN(opts.MarkSize) || math.IsInf(opts.MarkSize, 0) || opts.MarkSize < 48 || opts.MarkSize > 66 {
 		return "", errors.New("Choose a mark size between 48 and 66dp with --size.")
 	}
-	background, err := loadBackground(ctx, opts.Background)
+	background, err := opts.background(ctx)
 	if err != nil {
 		return "", err
 	}
