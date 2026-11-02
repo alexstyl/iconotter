@@ -6,7 +6,7 @@ Create every icon your app needs from one piece of artwork, straight from the te
 
 Icon Otter turns an SVG, PNG, or JPEG into ready-to-use app icons for Android, iOS, macOS, Windows, Linux and the web, from adaptive launcher icons to `.icns`, `.ico` and favicons. Everything runs locally, without an account, server, or AI service.
 
-[Installation](#installation) · [Quick start](#quick-start) · [Examples](#examples) · [Options](#options) · [Integration](#integration)
+[Installation](#installation) · [Quick start](#quick-start) · [Example output](#example-output) · [Examples](#examples) · [Options](#options) · [Integration](#integration)
 
 ## Installation
 
@@ -64,6 +64,27 @@ Generation never overwrites an existing output directory or edits your app. All 
 - **Flexible composition:** trim transparent source padding, preserve aspect ratio, choose a solid background, and adjust content padding—including intentional cropping.
 - **Local SVG rendering:** embedded resvg handles paths, shapes, gradients, and internal references without an external renderer.
 - **Interactive or scripted:** prompts when artwork is omitted in a terminal; explicit flags for scripts and agents.
+
+## Example output
+
+The otter from the header, split into two layers: [the artwork](assets/examples/otter.png) and [a single-color silhouette](assets/examples/otter-monochrome.png) for Android themed icons, on the header's yellow.
+
+```sh
+iconotter launcher \
+  --foreground assets/examples/otter.png \
+  --monochrome assets/examples/otter-monochrome.png \
+  --background '#FDDD0E' \
+  --platform android,ios,macos,windows,linux,web
+```
+
+| Platform | Output | What you get |
+| --- | --- | --- |
+| Android | ![Otter Android launcher icon in circle, squircle and square masks, with themed versions below](assets/examples/android.png) | Adaptive icon with a themed variant, legacy and round icons, and a Play Store image |
+| iOS | ![Otter iOS app icon on yellow](assets/examples/ios.png) | 1024×1024 icon in an Xcode asset catalog |
+| macOS | ![Otter macOS app icon on a yellow glass tile](assets/examples/macos.png) | Glass app icon as `.icns`, `.iconset`, asset catalog and editable `.icon` |
+| Windows | ![Otter Windows icon at 96, 48, 32 and 16 pixels](assets/examples/windows.png) | `AppIcon.ico` with 16–256px images |
+| Linux | ![Otter Linux icons at 128, 48, 32 and 16 pixels](assets/examples/linux.png) | 512px icon and the `hicolor` theme from 16 to 512px |
+| Web | ![Otter Apple touch icon and 32 and 16 pixel favicons](assets/examples/web.png) | `favicon.ico`, 16px and 32px favicons, and a 180px Apple touch icon |
 
 ## Examples
 
