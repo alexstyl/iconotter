@@ -30,9 +30,6 @@ archives:
 checksum:
   name_template: SHA256SUMS
 
-changelog:
-  disable: true
-
 release:
   replace_existing_artifacts: true
 

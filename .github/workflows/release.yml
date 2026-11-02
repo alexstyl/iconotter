@@ -16,4 +16,5 @@ jobs:
       bump: ${{ inputs.bump }}
     permissions:
       contents: write
-    secrets: inherit
+    secrets:
+      HOMEBREW_TAP_DEPLOY_KEY: ${{ secrets.HOMEBREW_TAP_DEPLOY_KEY }}
