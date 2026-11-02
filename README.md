@@ -6,7 +6,7 @@ Create every icon your app needs from one piece of artwork, straight from the te
 
 Icon Otter turns an SVG, PNG, or JPEG into ready-to-use app icons for Android, iOS, macOS, Windows, Linux and the web, from adaptive launcher icons to `.icns`, `.ico` and favicons. Everything runs locally, without an account, server, or AI service.
 
-[Installation](#installation) · [Quick start](#quick-start) · [Example output](#example-output) · [Examples](#examples) · [Options](#options) · [Integration](#integration)
+[Installation](#installation) · [Quick start](#quick-start) · [Icons for every platform](#icons-for-every-platform) · [Examples](#examples) · [Options](#options) · [Integration](#integration)
 
 ## Installation
 
@@ -65,7 +65,7 @@ Generation never overwrites an existing output directory or edits your app. All 
 - **Local SVG rendering:** embedded resvg handles paths, shapes, gradients, and internal references without an external renderer.
 - **Interactive or scripted:** prompts when artwork is omitted in a terminal; explicit flags for scripts and agents.
 
-## Example output
+## Icons for every platform
 
 The otter from the header, split into two layers: [the artwork](assets/examples/otter.png) and [a single-color silhouette](assets/examples/otter-monochrome.png) for Android themed icons, on [the header's pattern](assets/examples/pattern.png).
 
