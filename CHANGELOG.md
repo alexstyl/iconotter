@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.2.1 - 2026-11-02
+
 - Android: launcher instructions no longer say you need to compile against API 33; themed icons work with any compileSdk.
 
 ## 0.2.0 - 2026-11-02
