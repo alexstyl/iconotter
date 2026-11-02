@@ -1,0 +1,56 @@
+version: 2
+
+before:
+  hooks:
+    # Licence texts of the Go modules compiled into each OS's binary, shipped in its archive.
+    - sh scripts/third-party-licenses.sh
+
+builds:
+  - env: [CGO_ENABLED=0]
+    goos: [darwin, linux, windows]
+    goarch: [amd64, arm64]
+    flags: [-trimpath]
+    ldflags: ["-s -w -X main.version={{ .Version }}"]
+    mod_timestamp: "{{ .CommitTimestamp }}"
+
+archives:
+  - formats: [tar.gz]
+    format_overrides:
+      - goos: windows
+        formats: [zip]
+    files:
+      - LICENSE
+      - README.md
+      - src: build/third_party/{{ .Os }}/go/**/*
+        dst: third_party/go
+        strip_parent: false
+      - src: resvg/THIRD_PARTY_LICENSES.txt
+        dst: third_party/resvg
+
+checksum:
+  name_template: SHA256SUMS
+
+changelog:
+  disable: true
+
+release:
+  replace_existing_artifacts: true
+
+homebrew_casks:
+  - repository:
+      owner: alexstyl
+      name: homebrew-tap
+      git:
+        url: git@github.com:alexstyl/homebrew-tap.git
+        private_key: '{{ envOrDefault "HOMEBREW_TAP_DEPLOY_KEY" "" }}'
+    directory: Casks
+    homepage: https://github.com/alexstyl/iconotter
+    description: Create app icons for every platform from your artwork
+    commit_msg_template: "Release Icon Otter {{ .Version }}"
+    hooks:
+      post:
+        # The binaries are not notarized; let macOS run the one Homebrew installed.
+        install_steps: |
+          on_macos do
+            run "/usr/bin/xattr", args: ["-dr", "com.apple.quarantine", "{{ .StagedPath }}/iconotter"]
+          end
