@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"image"
+	"image/color"
 	"image/draw"
 	"math"
 	"os"
@@ -37,22 +38,30 @@ func findIconComposerTool() (string, error) {
 
 // Apple renders the background. The artwork layer is deliberately opaque/flat
 // in material terms, while preserving the artwork's own alpha channel. A color
-// becomes the document's fill; an image becomes a full-bleed layer in the
-// bottom group, because the first group is drawn on top.
+// becomes the document's automatic-gradient fill. An image becomes a full-bleed
+// layer in the bottom group, because the first group is drawn on top. It
+// multiplies over Apple's automatic gradient of white, so Icon Composer still
+// renders the lighter top and darker bottom.
 func macGlassDocument(name string, background iconBackground) map[string]any {
-	group := func(layerName, imageName, shadow string) map[string]any {
+	layer := func(layerName, imageName string) map[string]any {
+		return map[string]any{"name": layerName, "image-name": imageName, "glass": false, "position": map[string]any{"scale": 1, "translation-in-points": []int{0, 0}}}
+	}
+	group := func(shadow string, layers ...any) map[string]any {
 		return map[string]any{
-			"layers":       []any{map[string]any{"name": layerName, "image-name": imageName, "glass": false, "position": map[string]any{"scale": 1, "translation-in-points": []int{0, 0}}}},
+			"layers":       layers,
 			"shadow":       map[string]any{"kind": shadow, "opacity": 0},
 			"translucency": map[string]any{"enabled": false, "value": 0},
 		}
 	}
-	groups := []any{group(name, "foreground.png", "neutral")}
-	var fill any = map[string]any{"automatic-gradient": fmt.Sprintf("srgb:%.5f,%.5f,%.5f,1.00000", float64(background.color.R)/255, float64(background.color.G)/255, float64(background.color.B)/255)}
+	groups := []any{group("neutral", layer(name, "foreground.png"))}
+	base := background.color
 	if background.image != nil {
-		fill = "none"
-		groups = append(groups, group("Background", "background.png", "none"))
+		base = color.NRGBA{R: 255, G: 255, B: 255, A: 255}
+		backgroundLayer := layer("Background", "background.png")
+		backgroundLayer["blend-mode"] = "multiply"
+		groups = append(groups, group("none", backgroundLayer))
 	}
+	fill := map[string]any{"automatic-gradient": fmt.Sprintf("srgb:%.5f,%.5f,%.5f,1.00000", float64(base.R)/255, float64(base.G)/255, float64(base.B)/255)}
 	return map[string]any{"fill": fill, "groups": groups, "supported-platforms": map[string]any{"squares": "shared"}}
 }
 

@@ -181,6 +181,7 @@ func TestGlassDocumentPutsImageBackgroundUnderArtwork(t *testing.T) {
 		Groups []struct {
 			Layers []struct {
 				Image string `json:"image-name"`
+				Blend string `json:"blend-mode"`
 				Glass bool   `json:"glass"`
 			} `json:"layers"`
 		} `json:"groups"`
@@ -188,8 +189,15 @@ func TestGlassDocumentPutsImageBackgroundUnderArtwork(t *testing.T) {
 	if err := json.Unmarshal(data, &document); err != nil {
 		t.Fatal(err)
 	}
-	if document.Fill != "none" || len(document.Groups) != 2 || document.Groups[0].Layers[0].Image != "foreground.png" || document.Groups[1].Layers[0].Image != "background.png" || document.Groups[1].Layers[0].Glass {
+	// The image multiplies over Apple's automatic gradient of white, so Icon
+	// Composer renders the glass gradient itself.
+	fill, _ := document.Fill.(map[string]any)
+	if fill["automatic-gradient"] != "srgb:1.00000,1.00000,1.00000,1.00000" || len(document.Groups) != 2 || document.Groups[0].Layers[0].Image != "foreground.png" ||
+		len(document.Groups[1].Layers) != 1 || document.Groups[1].Layers[0].Image != "background.png" || document.Groups[1].Layers[0].Blend != "multiply" || document.Groups[1].Layers[0].Glass {
 		t.Fatalf("wrong glass document: %s", data)
+	}
+	if _, err := os.Stat(filepath.Join(doc, "Assets", "shading.png")); !os.IsNotExist(err) {
+		t.Fatal("the glass gradient must come from Icon Composer, not a drawn layer")
 	}
 	layer := readPNG(t, filepath.Join(doc, "Assets", "background.png"))
 	if layer.Bounds().Dx() != macCanvas || layer.Bounds().Dy() != macCanvas {
