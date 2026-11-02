@@ -179,9 +179,9 @@ func TestGlassDocumentPutsImageBackgroundUnderArtwork(t *testing.T) {
 	var document struct {
 		Fill   any `json:"fill"`
 		Groups []struct {
+			Blend  string `json:"blend-mode"`
 			Layers []struct {
 				Image string `json:"image-name"`
-				Blend string `json:"blend-mode"`
 				Glass bool   `json:"glass"`
 			} `json:"layers"`
 		} `json:"groups"`
@@ -193,7 +193,7 @@ func TestGlassDocumentPutsImageBackgroundUnderArtwork(t *testing.T) {
 	// Composer renders the glass gradient itself.
 	fill, _ := document.Fill.(map[string]any)
 	if fill["automatic-gradient"] != "srgb:1.00000,1.00000,1.00000,1.00000" || len(document.Groups) != 2 || document.Groups[0].Layers[0].Image != "foreground.png" ||
-		len(document.Groups[1].Layers) != 1 || document.Groups[1].Layers[0].Image != "background.png" || document.Groups[1].Layers[0].Blend != "multiply" || document.Groups[1].Layers[0].Glass {
+		len(document.Groups[1].Layers) != 1 || document.Groups[1].Layers[0].Image != "background.png" || document.Groups[1].Blend != "multiply" || document.Groups[1].Layers[0].Glass {
 		t.Fatalf("wrong glass document: %s", data)
 	}
 	if _, err := os.Stat(filepath.Join(doc, "Assets", "shading.png")); !os.IsNotExist(err) {
@@ -216,11 +216,16 @@ func TestAppleGlassRendersImageBackground(t *testing.T) {
 	if err := writeMacOS(context.Background(), opts); err != nil {
 		t.Fatal(err)
 	}
-	// Apple's renderer adds light glass edges; the middle of the tile beside the
-	// artwork shows the background image.
-	got := color.NRGBAModel.Convert(readPNG(t, filepath.Join(opts.Output, "preview.png")).At(512, 160)).(color.NRGBA)
-	if got.B < got.R+80 {
-		t.Fatalf("glass tile does not show the background image: %v", got)
+	// The tile above and below the artwork shows the uniform background image.
+	preview := readPNG(t, filepath.Join(opts.Output, "preview.png"))
+	top := color.NRGBAModel.Convert(preview.At(512, 160)).(color.NRGBA)
+	bottom := color.NRGBAModel.Convert(preview.At(512, 860)).(color.NRGBA)
+	if top.B < top.R+80 {
+		t.Fatalf("glass tile does not show the background image: %v", top)
+	}
+	// Icon Composer's gradient leaves the bottom of the tile darker than the top.
+	if int(bottom.R)+int(bottom.G)+int(bottom.B)+15 > int(top.R)+int(top.G)+int(top.B) {
+		t.Fatalf("glass tile has no gradient: top %v, bottom %v", top, bottom)
 	}
 }
 

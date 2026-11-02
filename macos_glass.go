@@ -39,9 +39,10 @@ func findIconComposerTool() (string, error) {
 // Apple renders the background. The artwork layer is deliberately opaque/flat
 // in material terms, while preserving the artwork's own alpha channel. A color
 // becomes the document's automatic-gradient fill. An image becomes a full-bleed
-// layer in the bottom group, because the first group is drawn on top. It
-// multiplies over Apple's automatic gradient of white, so Icon Composer still
-// renders the lighter top and darker bottom.
+// layer in the bottom group, because the first group is drawn on top. That
+// group multiplies over Apple's automatic gradient of white, so Icon Composer
+// still renders the lighter top and darker bottom. Icon Composer ignores
+// blend modes on layers; it applies them to groups.
 func macGlassDocument(name string, background iconBackground) map[string]any {
 	layer := func(layerName, imageName string) map[string]any {
 		return map[string]any{"name": layerName, "image-name": imageName, "glass": false, "position": map[string]any{"scale": 1, "translation-in-points": []int{0, 0}}}
@@ -57,9 +58,9 @@ func macGlassDocument(name string, background iconBackground) map[string]any {
 	base := background.color
 	if background.image != nil {
 		base = color.NRGBA{R: 255, G: 255, B: 255, A: 255}
-		backgroundLayer := layer("Background", "background.png")
-		backgroundLayer["blend-mode"] = "multiply"
-		groups = append(groups, group("none", backgroundLayer))
+		backgroundGroup := group("none", layer("Background", "background.png"))
+		backgroundGroup["blend-mode"] = "multiply"
+		groups = append(groups, backgroundGroup)
 	}
 	fill := map[string]any{"automatic-gradient": fmt.Sprintf("srgb:%.5f,%.5f,%.5f,1.00000", float64(base.R)/255, float64(base.G)/255, float64(base.B)/255)}
 	return map[string]any{"fill": fill, "groups": groups, "supported-platforms": map[string]any{"squares": "shared"}}
